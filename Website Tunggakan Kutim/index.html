@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Tunggakan Kutim</title>
+    <link rel="stylesheet" href="style.css">  <!-- Hubungkan style.css -->
+</head>
+<body>
+    <div class="container">
+        <h1>Database Tunggakan Kutim</h1>
+        <div class="search-container">
+            <input type="text" id="search" placeholder="Masukkan Nama, Alamat, atau NIK...">
+            <button onclick="searchData()">🔍 CARI</button>
+        </div>
+        <p id="loading" class="hidden">⏳ Sedang mencari...</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Nopol</th>
+                    <th>Nama</th>
+                    <th>Alamat</th>
+                    <th>NIK</th>
+                </tr>
+            </thead>
+            <tbody id="results"></tbody>
+        </table>
+    </div>
+
+    <script>
+        // API Key & Spreadsheet ID langsung di sini
+        const sheetId = "1M1fvwdPn5-RaEUYZs2t2On_8Xc8Fhync9IbXBN0jRx8";  
+        const apiKey = "AIzaSyAYu25karzBNotEDbchsiRKQmQbGh0bWAE";  
+        const sheetName = "Sheet1";  
+
+        // Fungsi mengambil data dari Google Sheets saat tombol CARI diklik
+        async function searchData() {
+            const query = document.getElementById("search").value.toLowerCase();
+            const resultsTable = document.getElementById("results");
+            const loadingIndicator = document.getElementById("loading");
+
+            // Tampilkan indikator loading
+            loadingIndicator.classList.remove("hidden");
+            resultsTable.innerHTML = "";
+
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${sheetName}?key=${apiKey}`;
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                const rows = data.values.slice(1); // Hapus header
+
+                // Filter data berdasarkan Nama, Alamat, atau NIK
+                const filtered = rows.filter(row => {
+                    if (row.length < 4) return false;
+                    return (
+                        row[1]?.toLowerCase().includes(query) || // Nama
+                        row[2]?.toLowerCase().includes(query) || // Alamat
+                        row[3]?.toLowerCase().includes(query)    // NIK
+                    );
+                });
+
+                // Sembunyikan indikator loading
+                loadingIndicator.classList.add("hidden");
+
+                // Tampilkan hasil pencarian
+                resultsTable.innerHTML = filtered.length
+                    ? filtered.map(row => `<tr><td>${row[0]}</td><td>${row[1]}</td><td>${row[2]}</td><td>${row[3]}</td></tr>`).join("")
+                    : "<tr><td colspan='4' class='no-data'>❌ Data tidak ditemukan</td></tr>";
+            } catch (error) {
+                console.error("Gagal mengambil data:", error);
+                loadingIndicator.textContent = "❌ Terjadi kesalahan. Coba lagi.";
+            }
+        }
+    </script>
+</body>
+</html>
